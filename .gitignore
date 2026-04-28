@@ -18,4 +18,3 @@ DerivedData/
 
 # Secrets — never commit these
 Configuration/Secrets.xcconfig
-Letterly/Secrets.swift
