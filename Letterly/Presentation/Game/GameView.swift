@@ -1,55 +1,86 @@
 import SwiftUI
 import Combine
 
+private enum GameAlert: Identifiable {
+    case leave
+    case gameWon
+    case gameLost(target: String)
+
+    var id: String {
+        switch self {
+        case .leave:          return "leave"
+        case .gameWon:        return "gameWon"
+        case .gameLost:       return "gameLost"
+        }
+    }
+}
+
 struct GameView: View {
     @StateObject var viewModel: GameViewModel
     @Environment(\.dismiss) private var dismiss
 
-    @State private var showLeaveAlert = false
-    @State private var showGameOverAlert = false
+    @State private var activeAlert: GameAlert? = nil
     @State private var showHintDialog = false
     @State private var hintDialogHints: [String] = []
     @State private var hintDialogRemaining: Int = 0
     @State private var toast: String? = nil
-    @State private var gameOverEvent: GameEvent? = nil
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            Spacer(minLength: 16)
-            BoardView(board: viewModel.board)
-            Spacer(minLength: 24)
-            KeyboardView(
-                keyboard: viewModel.keyboard,
-                onLetter: { viewModel.addLetter($0) },
-                onDelete: { viewModel.removeLetter() }
-            )
-        }
-        .navigationBarBackButtonHidden()
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button {
-                    if viewModel.gameStatus == .continueGame {
-                        showLeaveAlert = true
-                    } else {
-                        dismiss()
-                    }
-                } label: {
-                    Image(systemName: "chevron.left")
-                }
+        ZStack(alignment: .topLeading) {
+            VStack(spacing: 0) {
+                header
+                Spacer(minLength: 16)
+                BoardView(board: viewModel.board)
+                Spacer(minLength: 24)
+                KeyboardView(
+                    keyboard: viewModel.keyboard,
+                    onLetter: { viewModel.addLetter($0) },
+                    onDelete: { viewModel.removeLetter() }
+                )
             }
+
+            Button {
+                if viewModel.gameStatus == .continueGame {
+                    activeAlert = .leave
+                } else {
+                    dismiss()
+                }
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.primary)
+                    .padding(12)
+                    .background(Color(.systemGray5).opacity(0.8))
+                    .clipShape(Circle())
+            }
+            .padding(.leading, 16)
+            .padding(.top, 8)
         }
-        .alert("Leave game?", isPresented: $showLeaveAlert) {
-            Button("Leave", role: .destructive) { dismiss() }
-            Button("Stay", role: .cancel) {}
-        } message: {
-            Text("Your current game will be lost.")
-        }
-        .alert(gameOverTitle, isPresented: $showGameOverAlert) {
-            Button("Play Again") { viewModel.resetGame() }
-            Button("Back", role: .cancel) { dismiss() }
-        } message: {
-            Text(gameOverMessage)
+        .navigationBarHidden(true)
+        .alert(item: $activeAlert) { alert in
+            switch alert {
+            case .leave:
+                return Alert(
+                    title: Text("Leave game?"),
+                    message: Text("Your current game will be lost."),
+                    primaryButton: .destructive(Text("Leave")) { dismiss() },
+                    secondaryButton: .cancel(Text("Stay"))
+                )
+            case .gameWon:
+                return Alert(
+                    title: Text("You won! 🎉"),
+                    message: Text("Play again?"),
+                    primaryButton: .default(Text("Play Again")) { viewModel.resetGame() },
+                    secondaryButton: .cancel(Text("Back")) { dismiss() }
+                )
+            case .gameLost(let target):
+                return Alert(
+                    title: Text("You lost! 😢"),
+                    message: Text("The word was: \(target.uppercased())\nPlay again?"),
+                    primaryButton: .default(Text("Play Again")) { viewModel.resetGame() },
+                    secondaryButton: .cancel(Text("Back")) { dismiss() }
+                )
+            }
         }
         .overlay {
             if showHintDialog {
@@ -104,24 +135,6 @@ struct GameView: View {
         .padding(.top, 16)
     }
 
-    private var gameOverTitle: String {
-        guard let event = gameOverEvent else { return "" }
-        switch event {
-        case .gameWon:  return "You won! 🎉"
-        case .gameLost: return "You lost! 😢"
-        default:        return ""
-        }
-    }
-
-    private var gameOverMessage: String {
-        guard let event = gameOverEvent else { return "" }
-        switch event {
-        case .gameWon:             return "Play again?"
-        case .gameLost(let word):  return "The word was: \(word.uppercased())\nPlay again?"
-        default:                   return ""
-        }
-    }
-
     private func onHintTapped() {
         if viewModel.receivedHints.isEmpty {
             viewModel.requestHint()
@@ -138,9 +151,10 @@ struct GameView: View {
             showToast("Word not in dictionary")
         case .duplicateWord:
             showToast("Word already guessed")
-        case .gameWon, .gameLost:
-            gameOverEvent = event
-            showGameOverAlert = true
+        case .gameWon:
+            activeAlert = .gameWon
+        case .gameLost(let target):
+            activeAlert = .gameLost(target: target)
         case .hintReceived(let hints):
             hintDialogHints = hints
             hintDialogRemaining = viewModel.mode.maxHints - viewModel.hintsUsed
