@@ -18,7 +18,7 @@ final class AppContainer {
     let getHintUseCase: GetHintUseCase
 
     private init() {
-        let groqAPIKey = Secrets.groqAPIKey
+        let groqAPIKey = Bundle.main.object(forInfoDictionaryKey: "GROQ_API_KEY") as? String ?? ""
 
         wordRepository = WordRepositoryImpl()
         hintRepository = HintRepositoryImpl(apiService: GroqAPIService(apiKey: groqAPIKey))
