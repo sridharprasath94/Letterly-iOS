@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum LetterState {
+enum LetterState: String, Codable {
     case empty
     case correct
     case present

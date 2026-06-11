@@ -30,6 +30,9 @@ final class GameViewModel: ObservableObject {
     private let updateWordTimestampUseCase: UpdateWordTimestampUseCase
     private let getHintUseCase: GetHintUseCase
     private let recordGameResultUseCase: RecordGameResultUseCase
+    private let saveGameStateUseCase: SaveGameStateUseCase
+    private let loadGameStateUseCase: LoadGameStateUseCase
+    private let clearGameStateUseCase: ClearGameStateUseCase
 
     init(
         mode: GameMode,
@@ -43,7 +46,10 @@ final class GameViewModel: ObservableObject {
         updateKeyboardStateUseCase: UpdateKeyboardStateUseCase,
         updateWordTimestampUseCase: UpdateWordTimestampUseCase,
         getHintUseCase: GetHintUseCase,
-        recordGameResultUseCase: RecordGameResultUseCase
+        recordGameResultUseCase: RecordGameResultUseCase,
+        saveGameStateUseCase: SaveGameStateUseCase,
+        loadGameStateUseCase: LoadGameStateUseCase,
+        clearGameStateUseCase: ClearGameStateUseCase
     ) {
         self.mode = mode
         self.getRandomWordUseCase = getRandomWordUseCase
@@ -57,10 +63,17 @@ final class GameViewModel: ObservableObject {
         self.updateWordTimestampUseCase = updateWordTimestampUseCase
         self.getHintUseCase = getHintUseCase
         self.recordGameResultUseCase = recordGameResultUseCase
+        self.saveGameStateUseCase = saveGameStateUseCase
+        self.loadGameStateUseCase = loadGameStateUseCase
+        self.clearGameStateUseCase = clearGameStateUseCase
     }
 
     func startGame() {
         Task {
+            if let saved = loadGameStateUseCase.execute(mode: mode) {
+                restoreState(saved)
+                return
+            }
             guesses.removeAll()
             guard let word = await getRandomWordUseCase.execute(mode: mode) else { return }
             targetWord = word.value
@@ -70,6 +83,39 @@ final class GameViewModel: ObservableObject {
             gameStatus = .continueGame
             keyboard = [:]
         }
+    }
+
+    private func restoreState(_ saved: GameSaveState) {
+        targetWord = saved.targetWord
+        board = saved.board
+        currentRow = saved.currentRow
+        currentCol = saved.currentCol
+        keyboard = saved.keyboard.reduce(into: [Character: LetterState]()) { result, pair in
+            if let c = pair.key.first { result[c] = pair.value }
+        }
+        guesses = saved.guesses
+        hintsUsed = saved.hintsUsed
+        receivedHints = saved.receivedHints
+        previousHints = saved.receivedHints
+        gameStatus = .continueGame
+    }
+
+    private func saveState() {
+        let encodedKeyboard = keyboard.reduce(into: [String: LetterState]()) { result, pair in
+            result[String(pair.key)] = pair.value
+        }
+        let state = GameSaveState(
+            mode: mode,
+            targetWord: targetWord,
+            board: board,
+            currentRow: currentRow,
+            currentCol: currentCol,
+            keyboard: encodedKeyboard,
+            guesses: guesses,
+            hintsUsed: hintsUsed,
+            receivedHints: receivedHints
+        )
+        saveGameStateUseCase.execute(state: state, mode: mode)
     }
 
     func addLetter(_ letter: Character) {
@@ -125,10 +171,14 @@ final class GameViewModel: ObservableObject {
             if status == .win {
                 await updateWordTimestampUseCase.execute(word: targetWord, mode: mode)
                 recordGameResultUseCase.execute(didWin: true)
+                clearGameStateUseCase.execute(mode: mode)
                 eventPublisher.send(.gameWon)
             } else if status == .lose {
                 recordGameResultUseCase.execute(didWin: false)
+                clearGameStateUseCase.execute(mode: mode)
                 eventPublisher.send(.gameLost(target: targetWord))
+            } else {
+                saveState()
             }
         }
     }
@@ -144,6 +194,7 @@ final class GameViewModel: ObservableObject {
                 previousHints.append(hint)
                 receivedHints = previousHints
                 hintsUsed += 1
+                saveState()
                 eventPublisher.send(.hintReceived(hints: receivedHints))
             case .failure:
                 eventPublisher.send(.hintFailed)
@@ -156,6 +207,7 @@ final class GameViewModel: ObservableObject {
     }
 
     func resetGame() {
+        clearGameStateUseCase.execute(mode: mode)
         guesses.removeAll()
         previousHints.removeAll()
         receivedHints = []

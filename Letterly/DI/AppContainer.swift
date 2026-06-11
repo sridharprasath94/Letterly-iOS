@@ -20,6 +20,11 @@ final class AppContainer {
     let getStatsUseCase: GetStatsUseCase
     let recordGameResultUseCase: RecordGameResultUseCase
 
+    let gameStateRepository: GameStateRepository
+    let saveGameStateUseCase: SaveGameStateUseCase
+    let loadGameStateUseCase: LoadGameStateUseCase
+    let clearGameStateUseCase: ClearGameStateUseCase
+
     private init() {
         let groqAPIKey = Bundle.main.object(forInfoDictionaryKey: "GROQ_API_KEY") as? String ?? ""
 
@@ -39,6 +44,11 @@ final class AppContainer {
         statsRepository = StatsRepositoryImpl()
         getStatsUseCase = GetStatsUseCase(repository: statsRepository)
         recordGameResultUseCase = RecordGameResultUseCase(repository: statsRepository)
+
+        gameStateRepository = GameStateRepositoryImpl()
+        saveGameStateUseCase = SaveGameStateUseCase(repository: gameStateRepository)
+        loadGameStateUseCase = LoadGameStateUseCase(repository: gameStateRepository)
+        clearGameStateUseCase = ClearGameStateUseCase(repository: gameStateRepository)
     }
 
     func makeGameViewModel(mode: GameMode) -> GameViewModel {
@@ -54,7 +64,10 @@ final class AppContainer {
             updateKeyboardStateUseCase: updateKeyboardStateUseCase,
             updateWordTimestampUseCase: updateWordTimestampUseCase,
             getHintUseCase: getHintUseCase,
-            recordGameResultUseCase: recordGameResultUseCase
+            recordGameResultUseCase: recordGameResultUseCase,
+            saveGameStateUseCase: saveGameStateUseCase,
+            loadGameStateUseCase: loadGameStateUseCase,
+            clearGameStateUseCase: clearGameStateUseCase
         )
     }
 

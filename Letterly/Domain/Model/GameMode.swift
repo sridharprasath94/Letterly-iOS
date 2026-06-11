@@ -1,4 +1,4 @@
-enum GameMode: String, CaseIterable, Identifiable {
+enum GameMode: String, CaseIterable, Identifiable, Codable {
     case classic
     case advanced
     case expert
