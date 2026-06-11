@@ -36,7 +36,14 @@ Prioritised technical debt, missing features, and improvement opportunities.
 
 ## Medium Priority
 
-### 5. Persist Word Timestamps in a Proper Store
+### 5. Prune Stale Game Save State
+
+**Status**: Per-mode `GameSaveState` keys (`active_game_state_classic` etc.) in `UserDefaults` are cleared when a game is completed or reset, but not on uninstall or after a configurable timeout.  
+**Impact**: Minimal — three small JSON blobs at most. But state from a very old abandoned game could restore unexpectedly.  
+**Action**: Add an expiry timestamp to `GameSaveState`. In `loadGameStateUseCase`, discard states older than 7 days and call `clearGameStateUseCase` immediately.  
+**Effort**: Trivial.
+
+### 6. Persist Word Timestamps in a Proper Store
 
 **Status**: Word timestamps are stored in `UserDefaults` as a flat `[String: Double]` dictionary that grows indefinitely.  
 **Impact**: Over time the dictionary could accumulate thousands of entries from different devices/reinstalls. No pruning mechanism exists.  
@@ -48,13 +55,6 @@ Prioritised technical debt, missing features, and improvement opportunities.
 **Status**: The key is read from `Info.plist` at runtime. If someone extracts the IPA, they can read the key.  
 **Impact**: Key abuse / unexpected charges.  
 **Action**: Proxy hint requests through a lightweight backend (Firebase Function, Supabase Edge Function, Cloudflare Worker). The mobile app calls the proxy; the proxy holds the key.  
-**Effort**: Medium.
-
-### 7. Add a Score / Statistics Screen
-
-**Status**: No game statistics are tracked.  
-**Potential features**: Win rate per mode, average guesses, current streak, distribution of guess counts (histogram).  
-**Action**: Store game results in `UserDefaults` (or SQLite). Add a `StatsView` accessible from `StartView`.  
 **Effort**: Medium.
 
 ### 8. Add UI Tests

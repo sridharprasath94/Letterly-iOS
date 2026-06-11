@@ -13,7 +13,7 @@ Letterly is a SwiftUI iOS word-puzzle game (Wordle-style) with three difficulty 
 - **Concurrency**: Swift `async/await` + `Actor`
 - **Networking**: `URLSession` + `Codable`
 - **DI**: Manual — `AppContainer` singleton
-- **Persistence**: In-memory `WordStore` actor + `UserDefaults` for timestamps
+- **Persistence**: In-memory `WordStore` actor + `UserDefaults` for word timestamps, game stats, and per-mode in-progress game state (`GameSaveState`)
 - **Secrets**: `Configuration/Secrets.xcconfig` (gitignored) → `Info.plist`
 - **No external dependencies** (no SPM packages, no CocoaPods)
 - **No test target** (tests do not exist yet)
@@ -80,6 +80,37 @@ Dependency direction: Presentation → Domain ← Data. Domain has zero framewor
 9. **New use cases = new file** in `Domain/UseCase/`. Each use case owns one public `execute()` method.
 10. **Wire new dependencies in `AppContainer`.** Do not create singletons elsewhere.
 
+## Persistence Design
+
+When implementing any feature that saves state:
+
+- **Persist business state only.** Game board, guesses, scores, preferences — yes. Loading spinners, animation flags, error messages — no.
+- **Provide a graceful fallback.** If saved data cannot be decoded, fall back to a clean default. Never crash on corrupted data.
+- **Clear at the right moment.** Saved state must be cleared when it is no longer valid — on game completion, on explicit reset, and before navigating to a fresh session. If clear happens *after* the new session starts, the old state can be accidentally restored.
+- **Consider re-entry UX.** Silent automatic restore is only appropriate when the user has no other meaningful choice. When they do have a choice (resume vs start fresh), present a confirmation dialog before navigating — not after. `NavigationLink` navigates immediately; replace it with a `Button` + `navigationDestination(item:)` when a pre-navigation decision is needed.
+- **Use per-record keys.** Independent records (e.g. one per game mode) must use independent `UserDefaults` keys so they cannot overwrite each other.
+- **`Character` is not `Codable`.** Encode as `String` and convert at the persistence boundary. Add `Codable` conformance via `extension` (not the struct body) to preserve synthesised initialisers.
+
+## Feature Development Considerations
+
+Before writing any code for a new feature:
+
+- **Consider the user experience.** What does the user see on first use? On error? On re-entry after interruption?
+- **Consider recovery flows.** What happens if the user is force-quit mid-flow? If they navigate away and return? If they tap the wrong button?
+- **Consider edge cases.** Empty state, maximum values, corrupt data, concurrent access.
+- **Consider persistence implications.** Does this feature create state that must survive restart? When should that state be cleared?
+
+## Product Review
+
+Before marking a feature complete, ask:
+
+- Can the user undo or reverse this action?
+- Can the user start fresh without losing unrelated progress?
+- Can the user recover if the app is closed mid-flow?
+- Is there an obvious UX gap a first-time user would encounter?
+
+If the answer to any of these is "no" and the feature warrants it, address the gap before shipping.
+
 ## Build Verification Rules
 
 After every code change, execute these steps in order:
@@ -143,10 +174,12 @@ xcrun simctl launch booted com.flash.Letterly
 Verify:
 - App launches without crash
 - Start screen shows three mode buttons
-- Tapping a mode opens the game board
+- If a saved game exists for a mode, tapping it shows the Resume / New Game dialog
+- Tapping a mode with no saved game opens a fresh game board immediately
 - Letters can be typed and deleted
 - Hint button is present and shows correct count
 - Navigation back from active game shows "Leave game?" alert
+- Force-quitting and relaunching restores the in-progress game for the same mode
 
 ## UI Review Checklist
 
@@ -169,6 +202,7 @@ Quick summary:
 - No test target exists
 - `GetRandomWordUseCase` returns `nil` after 10 failed retries (game hangs silently)
 - Word timestamps in `UserDefaults` are never pruned
+- `GameSaveState` per-mode keys grow indefinitely if user never completes a game
 
 ## Secret Key Setup (new machine / CI)
 
@@ -191,6 +225,7 @@ cp Configuration/Secrets.xcconfig.template Configuration/Secrets.xcconfig
 - `docs/release_process.md` — App Store release steps
 - `docs/feature_development_checklist.md` — per-feature checklist
 - `docs/next_steps.md` — technical debt and improvements
+- `docs/templates/` — reusable generic versions of the above docs for new iOS projects
 
 
 # Autonomous Execution Policy
