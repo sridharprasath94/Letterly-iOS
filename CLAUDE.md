@@ -225,7 +225,6 @@ cp Configuration/Secrets.xcconfig.template Configuration/Secrets.xcconfig
 - `docs/release_process.md` — App Store release steps
 - `docs/feature_development_checklist.md` — per-feature checklist
 - `docs/next_steps.md` — technical debt and improvements
-- `docs/templates/` — reusable generic versions of the above docs for new iOS projects
 
 
 # Autonomous Execution Policy
