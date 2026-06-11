@@ -3,6 +3,10 @@ import SwiftUI
 struct StartView: View {
     private let container = AppContainer.shared
 
+    @State private var navigatingTo: GameMode? = nil
+    @State private var pendingMode: GameMode? = nil
+    @State private var showResumeAlert = false
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -18,8 +22,8 @@ struct StartView: View {
 
                 VStack(spacing: 12) {
                     ForEach(GameMode.allCases) { mode in
-                        NavigationLink {
-                            GameView(viewModel: container.makeGameViewModel(mode: mode))
+                        Button {
+                            handleModeTap(mode)
                         } label: {
                             ModeButton(mode: mode)
                         }
@@ -29,6 +33,27 @@ struct StartView: View {
                 .padding(.horizontal, 32)
 
                 Spacer()
+            }
+            .navigationDestination(item: $navigatingTo) { mode in
+                GameView(viewModel: container.makeGameViewModel(mode: mode))
+            }
+            .alert("Resume Previous Game?", isPresented: $showResumeAlert) {
+                Button("Resume Game") {
+                    navigatingTo = pendingMode
+                    pendingMode = nil
+                }
+                Button("Start New Game", role: .destructive) {
+                    if let mode = pendingMode {
+                        container.clearGameStateUseCase.execute(mode: mode)
+                        navigatingTo = mode
+                    }
+                    pendingMode = nil
+                }
+                Button("Cancel", role: .cancel) {
+                    pendingMode = nil
+                }
+            } message: {
+                Text("You have an unfinished game in progress.")
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -50,6 +75,15 @@ struct StartView: View {
                     }
                 }
             }
+        }
+    }
+
+    private func handleModeTap(_ mode: GameMode) {
+        if container.loadGameStateUseCase.execute(mode: mode) != nil {
+            pendingMode = mode
+            showResumeAlert = true
+        } else {
+            navigatingTo = mode
         }
     }
 }
