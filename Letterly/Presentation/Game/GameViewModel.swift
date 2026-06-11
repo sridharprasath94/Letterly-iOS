@@ -29,6 +29,7 @@ final class GameViewModel: ObservableObject {
     private let updateKeyboardStateUseCase: UpdateKeyboardStateUseCase
     private let updateWordTimestampUseCase: UpdateWordTimestampUseCase
     private let getHintUseCase: GetHintUseCase
+    private let recordGameResultUseCase: RecordGameResultUseCase
 
     init(
         mode: GameMode,
@@ -41,7 +42,8 @@ final class GameViewModel: ObservableObject {
         clearRowUseCase: ClearRowUseCase,
         updateKeyboardStateUseCase: UpdateKeyboardStateUseCase,
         updateWordTimestampUseCase: UpdateWordTimestampUseCase,
-        getHintUseCase: GetHintUseCase
+        getHintUseCase: GetHintUseCase,
+        recordGameResultUseCase: RecordGameResultUseCase
     ) {
         self.mode = mode
         self.getRandomWordUseCase = getRandomWordUseCase
@@ -54,6 +56,7 @@ final class GameViewModel: ObservableObject {
         self.updateKeyboardStateUseCase = updateKeyboardStateUseCase
         self.updateWordTimestampUseCase = updateWordTimestampUseCase
         self.getHintUseCase = getHintUseCase
+        self.recordGameResultUseCase = recordGameResultUseCase
     }
 
     func startGame() {
@@ -121,8 +124,10 @@ final class GameViewModel: ObservableObject {
 
             if status == .win {
                 await updateWordTimestampUseCase.execute(word: targetWord, mode: mode)
+                recordGameResultUseCase.execute(didWin: true)
                 eventPublisher.send(.gameWon)
             } else if status == .lose {
+                recordGameResultUseCase.execute(didWin: false)
                 eventPublisher.send(.gameLost(target: targetWord))
             }
         }

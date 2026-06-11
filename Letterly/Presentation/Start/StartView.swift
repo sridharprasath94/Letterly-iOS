@@ -31,6 +31,15 @@ struct StartView: View {
                 Spacer()
             }
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    NavigationLink {
+                        StatsView(viewModel: container.makeStatsViewModel())
+                    } label: {
+                        Image(systemName: "chart.bar.xaxis")
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundColor(.primary)
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
                         SettingsView()
