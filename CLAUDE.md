@@ -18,6 +18,34 @@ Letterly is a SwiftUI iOS word-puzzle game (Wordle-style) with three difficulty 
 - **No external dependencies** (no SPM packages, no CocoaPods)
 - **No test target** (tests do not exist yet)
 
+## Global Engineering Skill
+
+This project uses the global Claude skill:
+
+```
+~/.claude/skills/senior-ios-engineering-workflow
+```
+
+**Initialization order:**
+1. Read `CLAUDE.md` (this file)
+2. Read relevant `docs/` files for the area being changed
+3. Apply `senior-ios-engineering-workflow` skill phases in order
+4. When project-specific instructions conflict with generic guidance, project-specific instructions take precedence
+
+**Expected workflow:**
+
+| Phase | Skill phase | Project reference |
+|---|---|---|
+| Requirement analysis | Phase 1 | This file; `docs/architecture.md` |
+| Architecture review | Phase 2 | `docs/architecture.md` |
+| Product review | Phase 3 | [Product Review](#product-review) below |
+| Persistence review | Phase 4 | [Persistence Review](#persistence-review) below |
+| Implementation | Phase 5 | [Development Rules](#development-rules) |
+| Build verification | Phase 6 | [Build Verification Rules](#build-verification-rules) |
+| Simulator verification | Phase 8 | [Simulator Verification](#simulator-verification) |
+| Code review | Phase 9 | — |
+| Documentation updates | Phase 10 | `docs/next_steps.md` |
+
 ## Architecture
 
 ```
@@ -80,36 +108,40 @@ Dependency direction: Presentation → Domain ← Data. Domain has zero framewor
 9. **New use cases = new file** in `Domain/UseCase/`. Each use case owns one public `execute()` method.
 10. **Wire new dependencies in `AppContainer`.** Do not create singletons elsewhere.
 
-## Persistence Design
+## Persistence Review
 
-When implementing any feature that saves state:
+Before implementing any feature that saves state, answer:
 
-- **Persist business state only.** Game board, guesses, scores, preferences — yes. Loading spinners, animation flags, error messages — no.
-- **Provide a graceful fallback.** If saved data cannot be decoded, fall back to a clean default. Never crash on corrupted data.
-- **Clear at the right moment.** Saved state must be cleared when it is no longer valid — on game completion, on explicit reset, and before navigating to a fresh session. If clear happens *after* the new session starts, the old state can be accidentally restored.
-- **Consider re-entry UX.** Silent automatic restore is only appropriate when the user has no other meaningful choice. When they do have a choice (resume vs start fresh), present a confirmation dialog before navigating — not after. `NavigationLink` navigates immediately; replace it with a `Button` + `navigationDestination(item:)` when a pre-navigation decision is needed.
-- **Use per-record keys.** Independent records (e.g. one per game mode) must use independent `UserDefaults` keys so they cannot overwrite each other.
-- **`Character` is not `Codable`.** Encode as `String` and convert at the persistence boundary. Add `Codable` conformance via `extension` (not the struct body) to preserve synthesised initialisers.
+- **What is persisted?** Game board, guesses, scores, preferences — yes. Loading spinners, animation flags, error messages — no.
+- **What is not persisted?** State kept in memory only (e.g. loading indicators always start `false` on launch).
+- **When is data saved?** Name the exact trigger — after each guess, on game completion, on explicit reset.
+- **When is data restored?** On app launch; inside `startGame()` when a saved state is found for the mode.
+- **When is data cleared?** On win or lose; before calling `startGame()` on an explicit reset; on "Start New Game" selection.
+- **How can the user start fresh?** Via the Resume / New Game dialog shown before navigating to the game screen.
 
-## Feature Development Considerations
+**Implementation rules for this project:**
+- Use per-mode `UserDefaults` keys (`active_game_state_classic`, etc.) so modes cannot overwrite each other.
+- `Character` is not `Codable` — encode as `String`; convert at the persistence boundary.
+- Add `Codable` conformance via `extension` (not the struct body) to preserve synthesised initialisers.
+- Clear saved state **before** calling `startGame()`, not after — the old state would otherwise be accidentally restored.
+- Show the Resume / New Game dialog **before** navigation. Use `Button` + `navigationDestination(item:)`, not `NavigationLink`.
+- If saved data cannot be decoded, fall back to a clean default. Never crash on corrupted data.
 
-Before writing any code for a new feature:
-
-- **Consider the user experience.** What does the user see on first use? On error? On re-entry after interruption?
-- **Consider recovery flows.** What happens if the user is force-quit mid-flow? If they navigate away and return? If they tap the wrong button?
-- **Consider edge cases.** Empty state, maximum values, corrupt data, concurrent access.
-- **Consider persistence implications.** Does this feature create state that must survive restart? When should that state be cleared?
+See `~/.claude/skills/senior-ios-engineering-workflow/references/persistence_review.md` for the full checklist.
 
 ## Product Review
 
 Before marking a feature complete, ask:
 
+- Can the user cancel this action before it takes effect?
 - Can the user undo or reverse this action?
 - Can the user start fresh without losing unrelated progress?
 - Can the user recover if the app is closed mid-flow?
-- Is there an obvious UX gap a first-time user would encounter?
+- What happens after a full app restart?
+- What happens if persisted data is corrupted or unreadable?
 
-If the answer to any of these is "no" and the feature warrants it, address the gap before shipping.
+If any answer is "no" and the feature warrants it, address the gap before shipping.
+See `~/.claude/skills/senior-ios-engineering-workflow/references/product_review.md` for patterns.
 
 ## Build Verification Rules
 
@@ -225,31 +257,11 @@ cp Configuration/Secrets.xcconfig.template Configuration/Secrets.xcconfig
 - `docs/release_process.md` — App Store release steps
 - `docs/feature_development_checklist.md` — per-feature checklist
 - `docs/next_steps.md` — technical debt and improvements
+- `~/.claude/skills/senior-ios-engineering-workflow/` — global iOS engineering workflow skill (all phases)
 
 
 # Autonomous Execution Policy
 
-For every implementation task:
+Apply the `senior-ios-engineering-workflow` skill for every implementation task. Run all phases in order. A task is only complete when the skill's **Completion Criteria** phase (Phase 11) passes.
 
-## Mandatory Steps
-
-1. Analyze requirement.
-2. Create implementation plan.
-3. Implement changes.
-4. Build project.
-5. Fix compile errors.
-6. Rebuild until BUILD SUCCEEDED.
-7. Run all relevant tests.
-8. Launch simulator.
-9. Install app.
-10. Launch app.
-11. Verify modified functionality.
-12. Verify no regression in related flows.
-13. Perform self code review.
-14. Update documentation if required.
-15. Commit changes.
-16. Create PR description.
-
-Never stop after implementation.
-
-A task is only complete when all verification steps succeed.
+Project-specific build, test, and simulator commands are in the sections above.
