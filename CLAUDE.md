@@ -42,9 +42,11 @@ This project uses the global Claude skill:
 | Persistence review | Phase 4 | [Persistence Review](#persistence-review) below |
 | Implementation | Phase 5 | [Development Rules](#development-rules) |
 | Build verification | Phase 6 | [Build Verification Rules](#build-verification-rules) |
-| Simulator verification | Phase 8 | [Simulator Verification](#simulator-verification) |
-| Code review | Phase 9 | — |
-| Documentation updates | Phase 10 | `docs/next_steps.md` |
+| UI/UX review | Phase 8 | `ui_ux_review.md` in skill |
+| QA review | Phase 9 | `qa_checklist.md` in skill |
+| Simulator verification | Phase 10 | [Simulator Verification](#simulator-verification) |
+| Code review | Phase 11 | — |
+| Documentation updates | Phase 12 | `docs/next_steps.md` |
 
 ## Architecture
 
@@ -262,6 +264,6 @@ cp Configuration/Secrets.xcconfig.template Configuration/Secrets.xcconfig
 
 # Autonomous Execution Policy
 
-Apply the `senior-ios-engineering-workflow` skill for every implementation task. Run all phases in order. A task is only complete when the skill's **Completion Criteria** phase (Phase 11) passes.
+Apply the `senior-ios-engineering-workflow` skill for every implementation task. Run all phases in order. A task is only complete when the skill's **Completion Criteria** phase (Phase 13) passes.
 
 Project-specific build, test, and simulator commands are in the sections above.
