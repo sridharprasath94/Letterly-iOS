@@ -71,16 +71,34 @@ struct AboutView: View {
 
     private var developerSection: some View {
         Section("Developer") {
-            infoRow("Developer", value: AppConfiguration.developerName)
+            HStack(spacing: 14) {
+                Image(systemName: "person.circle.fill")
+                    .font(.system(size: 44))
+                    .foregroundColor(.accentColor)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(AppConfiguration.developerName)
+                        .font(.headline)
+                    Text("Independent iOS Developer")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(.vertical, 4)
+            infoRow("Contact", value: AppConfiguration.contactEmail)
         }
     }
 
     private var legalSection: some View {
         Section("Legal") {
-            Link(destination: AppConfiguration.privacyPolicyURL) {
+            NavigationLink {
+                PrivacyPolicyView()
+            } label: {
                 Label("Privacy Policy", systemImage: "hand.raised")
             }
-            Link(destination: AppConfiguration.termsOfServiceURL) {
+            NavigationLink {
+                TermsOfServiceView()
+            } label: {
                 Label("Terms of Service", systemImage: "doc.text")
             }
         }
