@@ -191,3 +191,31 @@ cp Configuration/Secrets.xcconfig.template Configuration/Secrets.xcconfig
 - `docs/release_process.md` — App Store release steps
 - `docs/feature_development_checklist.md` — per-feature checklist
 - `docs/next_steps.md` — technical debt and improvements
+
+
+# Autonomous Execution Policy
+
+For every implementation task:
+
+## Mandatory Steps
+
+1. Analyze requirement.
+2. Create implementation plan.
+3. Implement changes.
+4. Build project.
+5. Fix compile errors.
+6. Rebuild until BUILD SUCCEEDED.
+7. Run all relevant tests.
+8. Launch simulator.
+9. Install app.
+10. Launch app.
+11. Verify modified functionality.
+12. Verify no regression in related flows.
+13. Perform self code review.
+14. Update documentation if required.
+15. Commit changes.
+16. Create PR description.
+
+Never stop after implementation.
+
+A task is only complete when all verification steps succeed.
