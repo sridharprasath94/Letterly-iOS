@@ -16,6 +16,14 @@ final class AppContainer {
     let updateKeyboardStateUseCase: UpdateKeyboardStateUseCase
     let updateWordTimestampUseCase: UpdateWordTimestampUseCase
     let getHintUseCase: GetHintUseCase
+    let statsRepository: StatsRepository
+    let getStatsUseCase: GetStatsUseCase
+    let recordGameResultUseCase: RecordGameResultUseCase
+
+    let gameStateRepository: GameStateRepository
+    let saveGameStateUseCase: SaveGameStateUseCase
+    let loadGameStateUseCase: LoadGameStateUseCase
+    let clearGameStateUseCase: ClearGameStateUseCase
 
     private init() {
         let groqAPIKey = Bundle.main.object(forInfoDictionaryKey: "GROQ_API_KEY") as? String ?? ""
@@ -33,6 +41,14 @@ final class AppContainer {
         updateKeyboardStateUseCase = UpdateKeyboardStateUseCase()
         updateWordTimestampUseCase = UpdateWordTimestampUseCase(repository: wordRepository)
         getHintUseCase = GetHintUseCase(repository: hintRepository)
+        statsRepository = StatsRepositoryImpl()
+        getStatsUseCase = GetStatsUseCase(repository: statsRepository)
+        recordGameResultUseCase = RecordGameResultUseCase(repository: statsRepository)
+
+        gameStateRepository = GameStateRepositoryImpl()
+        saveGameStateUseCase = SaveGameStateUseCase(repository: gameStateRepository)
+        loadGameStateUseCase = LoadGameStateUseCase(repository: gameStateRepository)
+        clearGameStateUseCase = ClearGameStateUseCase(repository: gameStateRepository)
     }
 
     func makeGameViewModel(mode: GameMode) -> GameViewModel {
@@ -47,7 +63,15 @@ final class AppContainer {
             clearRowUseCase: clearRowUseCase,
             updateKeyboardStateUseCase: updateKeyboardStateUseCase,
             updateWordTimestampUseCase: updateWordTimestampUseCase,
-            getHintUseCase: getHintUseCase
+            getHintUseCase: getHintUseCase,
+            recordGameResultUseCase: recordGameResultUseCase,
+            saveGameStateUseCase: saveGameStateUseCase,
+            loadGameStateUseCase: loadGameStateUseCase,
+            clearGameStateUseCase: clearGameStateUseCase
         )
+    }
+
+    func makeStatsViewModel() -> StatsViewModel {
+        StatsViewModel(getStatsUseCase: getStatsUseCase)
     }
 }

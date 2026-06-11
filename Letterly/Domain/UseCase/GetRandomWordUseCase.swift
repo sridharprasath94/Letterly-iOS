@@ -13,7 +13,8 @@ struct GetRandomWordUseCase {
                 return word
             }
         }
-        return nil
+        // All retries returned recently-answered words — fall back to any word so the game always starts.
+        return await repository.getRandomWord(length: mode.wordLength)
     }
 
     private func isOlderThanTenDays(_ word: Word) -> Bool {
