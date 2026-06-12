@@ -1,25 +1,12 @@
 import SwiftUI
 import Combine
 
-private enum GameAlert: Identifiable {
-    case leave
-    case gameWon
-    case gameLost(target: String)
-
-    var id: String {
-        switch self {
-        case .leave:          return "leave"
-        case .gameWon:        return "gameWon"
-        case .gameLost:       return "gameLost"
-        }
-    }
-}
-
 struct GameView: View {
     @StateObject var viewModel: GameViewModel
     @Environment(\.dismiss) private var dismiss
 
-    @State private var activeAlert: GameAlert? = nil
+    @State private var showLeaveAlert = false
+    @State private var endGameResult: EndGameResult? = nil
     @State private var showHintDialog = false
     @State private var hintDialogHints: [String] = []
     @State private var hintDialogRemaining: Int = 0
@@ -41,7 +28,7 @@ struct GameView: View {
 
             Button {
                 if viewModel.gameStatus == .continueGame {
-                    activeAlert = .leave
+                    showLeaveAlert = true
                 } else {
                     dismiss()
                 }
@@ -57,29 +44,26 @@ struct GameView: View {
             .padding(.top, 8)
         }
         .navigationBarHidden(true)
-        .alert(item: $activeAlert) { alert in
-            switch alert {
-            case .leave:
-                return Alert(
-                    title: Text("Leave game?"),
-                    message: Text("Your current game will be lost."),
-                    primaryButton: .destructive(Text("Leave")) { dismiss() },
-                    secondaryButton: .cancel(Text("Stay"))
+        .alert("Leave game?", isPresented: $showLeaveAlert) {
+            Button("Leave", role: .destructive) { dismiss() }
+            Button("Stay", role: .cancel) { }
+        } message: {
+            Text("Your current game will be lost.")
+        }
+        .overlay {
+            if let result = endGameResult {
+                EndGameView(
+                    result: result,
+                    onNewGame: {
+                        endGameResult = nil
+                        viewModel.resetGame()
+                    },
+                    onBack: {
+                        endGameResult = nil
+                        dismiss()
+                    }
                 )
-            case .gameWon:
-                return Alert(
-                    title: Text("You won! 🎉"),
-                    message: Text("Play again?"),
-                    primaryButton: .default(Text("Play Again")) { viewModel.resetGame() },
-                    secondaryButton: .cancel(Text("Back")) { dismiss() }
-                )
-            case .gameLost(let target):
-                return Alert(
-                    title: Text("You lost! 😢"),
-                    message: Text("The word was: \(target.uppercased())\nPlay again?"),
-                    primaryButton: .default(Text("Play Again")) { viewModel.resetGame() },
-                    secondaryButton: .cancel(Text("Back")) { dismiss() }
-                )
+                .transition(.opacity)
             }
         }
         .overlay {
@@ -99,6 +83,7 @@ struct GameView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: showHintDialog)
+        .animation(.easeInOut(duration: 0.2), value: endGameResult != nil)
         .overlay(alignment: .bottom) {
             if let message = toast {
                 ToastView(message: message)
@@ -151,10 +136,10 @@ struct GameView: View {
             showToast("Word not in dictionary")
         case .duplicateWord:
             showToast("Word already guessed")
-        case .gameWon:
-            activeAlert = .gameWon
-        case .gameLost(let target):
-            activeAlert = .gameLost(target: target)
+        case .gameWon(let guesses, let streak, let best):
+            endGameResult = .won(guessesUsed: guesses, currentStreak: streak, bestStreak: best)
+        case .gameLost(let target, let streak, let best):
+            endGameResult = .lost(target: target, currentStreak: streak, bestStreak: best)
         case .hintReceived(let hints):
             hintDialogHints = hints
             hintDialogRemaining = viewModel.mode.maxHints - viewModel.hintsUsed
