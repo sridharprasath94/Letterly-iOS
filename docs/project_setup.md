@@ -8,7 +8,7 @@
 | Swift | 6.3.2 (bundled with Xcode 26.5) |
 | iOS Deployment Target | 26.4 |
 | macOS | 26.x (Sequoia) |
-| Groq API Key | Free at https://console.groq.com |
+| Letterly Worker URL | Deployed `letterly-worker` endpoint; see `docs/worker.md` |
 
 No package manager (SPM, CocoaPods, Carthage) is used. The project has zero external dependencies.
 
@@ -21,7 +21,7 @@ git clone https://github.com/sridharprasath94/Letterly.git
 cd Letterly
 ```
 
-### 2. Configure the API key
+### 2. Configure the Worker URL
 
 ```bash
 cp Configuration/Secrets.xcconfig.template Configuration/Secrets.xcconfig
@@ -30,10 +30,22 @@ cp Configuration/Secrets.xcconfig.template Configuration/Secrets.xcconfig
 Edit `Configuration/Secrets.xcconfig`:
 
 ```
-GROQ_API_KEY = your_groq_api_key_here
+LETTERLY_WORKER_SCHEME = https
+LETTERLY_WORKER_HOST = letterly-worker.<your-subdomain>.workers.dev
 ```
 
-`Secrets.xcconfig` is gitignored. It is consumed as the base xcconfig for both Debug and Release build configurations and injected into `Info.plist` at build time under the key `GROQ_API_KEY`. `AppContainer` reads it at runtime via `Bundle.main.object(forInfoDictionaryKey:)`.
+For local development against a running `wrangler dev` instance:
+
+```
+LETTERLY_WORKER_SCHEME = http
+LETTERLY_WORKER_HOST = localhost:8787
+```
+
+`Secrets.xcconfig` is gitignored. It is consumed as the base xcconfig for both Debug and Release build configurations and injected into `Info.plist` at build time. `AppContainer` reads both keys at runtime via `Bundle.main.object(forInfoDictionaryKey:)` and assembles the URL as `scheme://host`.
+
+> **Note:** The Worker URL is intentionally split into two keys. xcconfig treats `//` as a line-comment delimiter, which would silently truncate a full URL value.
+
+The Groq API key is **not** required here — it lives in the Worker's Cloudflare secret store. See `docs/worker.md` for Worker setup and deployment.
 
 ### 3. Open in Xcode
 
@@ -102,6 +114,6 @@ The bundled `.txt` files ship with the app. They are loaded into `WordStore` at 
 
 ## CI / New Machine Notes
 
-- The `Secrets.xcconfig` file must be created before building. On CI, inject `GROQ_API_KEY` as an environment variable and write the file in a pre-build script step, or set the `GROQ_API_KEY` xcconfig variable directly via `-xcconfig` or `xcodebuild` overrides.
+- The `Secrets.xcconfig` file must be created before building. On CI, set `LETTERLY_WORKER_SCHEME` and `LETTERLY_WORKER_HOST` as GitHub Actions variables and write the file in a pre-build step (see `docs/ci_cd.md`). No Groq API key is required in the iOS build.
 - No `pod install` or `swift package resolve` is needed.
 - DerivedData is safe to delete at any time.

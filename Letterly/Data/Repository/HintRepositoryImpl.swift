@@ -1,8 +1,8 @@
 import Foundation
 struct HintRepositoryImpl: HintRepository {
-    private let apiService: GroqAPIService
+    private let apiService: HintAPIService
 
-    init(apiService: GroqAPIService) {
+    init(apiService: HintAPIService) {
         self.apiService = apiService
     }
 
@@ -13,11 +13,11 @@ struct HintRepositoryImpl: HintRepository {
         let prompt = "Give a single concise hint (under 15 words) for the word \"\(word)\" in a word guessing game. Describe its meaning or category without revealing the word itself.\(avoidClause)"
 
         do {
-            let response = try await apiService.getChatCompletion(
-                request: GroqRequest(messages: [GroqMessage(role: "user", content: prompt)])
+            let response = try await apiService.requestHint(
+                HintRequest(messages: [ChatMessage(role: "user", content: prompt)])
             )
             guard let hint = response.choices.first?.message.content else {
-                return .failure(GroqError.noHintReceived)
+                return .failure(HintServiceError.noHintReceived)
             }
             return .success(hint.trimmingCharacters(in: .whitespacesAndNewlines))
         } catch {
@@ -26,6 +26,6 @@ struct HintRepositoryImpl: HintRepository {
     }
 }
 
-enum GroqError: Error {
+enum HintServiceError: Error {
     case noHintReceived
 }

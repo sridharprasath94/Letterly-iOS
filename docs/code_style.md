@@ -65,7 +65,7 @@ Never write comments describing what the code does — the code and names alread
 ## Error Handling
 
 - Domain use cases return typed results (`Result<T, Error>`) rather than throwing, to make the error explicit at the call site.
-- Networking errors from `GroqAPIService` propagate up through the `Result` chain in `HintRepositoryImpl`.
+- Networking errors from `HintAPIService` propagate up through the `Result` chain in `HintRepositoryImpl`.
 - Never silently swallow errors. Either surface them as a `GameEvent` or log them.
 
 ## Dependency Injection

@@ -1,18 +1,16 @@
 import Foundation
 
-struct GroqAPIService {
-    private let baseURL = URL(string: "https://api.groq.com/openai/v1/chat/completions")!
-    private let apiKey: String
+struct HintAPIService {
+    private let workerURL: URL
 
-    init(apiKey: String) {
-        self.apiKey = apiKey
+    init(workerURL: URL) {
+        self.workerURL = workerURL
     }
 
-    func getChatCompletion(request: GroqRequest) async throws -> GroqResponse {
-        var urlRequest = URLRequest(url: baseURL)
+    func requestHint(_ request: HintRequest) async throws -> HintResponse {
+        var urlRequest = URLRequest(url: workerURL)
         urlRequest.httpMethod = "POST"
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        urlRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         urlRequest.httpBody = try JSONEncoder().encode(request)
 
         let (data, response) = try await URLSession.shared.data(for: urlRequest)
@@ -22,6 +20,6 @@ struct GroqAPIService {
             throw URLError(.badServerResponse)
         }
 
-        return try JSONDecoder().decode(GroqResponse.self, from: data)
+        return try JSONDecoder().decode(HintResponse.self, from: data)
     }
 }

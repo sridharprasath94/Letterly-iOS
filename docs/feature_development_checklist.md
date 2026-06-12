@@ -22,7 +22,7 @@ Use this checklist for every new feature. Check each item before moving to the n
 
 - [ ] Repository protocol implementations updated in `Data/Repository/`
 - [ ] New `WordStore` actor methods added if word-storage behaviour changes
-- [ ] New Groq API models added to `Data/Remote/GroqModels.swift` if prompt changes
+- [ ] New Groq API models added to `Data/Remote/HintModels.swift` if prompt changes
 - [ ] `HintRepositoryImpl` prompt updated if hint behaviour changes
 - [ ] Error propagation preserved — all failures surface through `Result` or `throw`
 

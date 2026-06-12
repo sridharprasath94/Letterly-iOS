@@ -50,12 +50,11 @@ Prioritised technical debt, missing features, and improvement opportunities.
 **Action**: Prune entries older than 30 days in `WordStore.setTimestamp`. Or migrate to a lightweight SQLite database using GRDB or a simple file.  
 **Effort**: Small to Medium.
 
-### 6. Protect the Groq API Key at Runtime
+### 6. ~~Protect the Groq API Key at Runtime~~ — Resolved
 
-**Status**: The key is read from `Info.plist` at runtime. If someone extracts the IPA, they can read the key.  
-**Impact**: Key abuse / unexpected charges.  
-**Action**: Proxy hint requests through a lightweight backend (Firebase Function, Supabase Edge Function, Cloudflare Worker). The mobile app calls the proxy; the proxy holds the key.  
-**Effort**: Medium.
+Hint requests are now proxied through the `letterly-worker` Cloudflare Worker.
+The app holds only the Worker's public URL; the Groq API key lives in the Worker's
+Cloudflare secret store and never ships in the app binary. See `docs/worker.md`.
 
 ### 8. Add UI Tests
 
@@ -106,6 +105,6 @@ Prioritised technical debt, missing features, and improvement opportunities.
 
 ### 15. Offline / Network Error Handling for Hints
 
-**Status**: If the device is offline, `GroqAPIService` throws a `URLError` which propagates to `.hintFailed`, showing a generic toast. There is no retry or offline indicator.  
+**Status**: If the device is offline, `HintAPIService` throws a `URLError` which propagates to `.hintFailed`, showing a generic toast. There is no retry or offline indicator.  
 **Action**: Detect `URLError.notConnectedToInternet` specifically and show a more informative message ("No internet connection — hints unavailable").  
 **Effort**: Small.
