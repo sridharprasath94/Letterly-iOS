@@ -5,7 +5,8 @@ struct RecordGameResultUseCase {
         self.repository = repository
     }
 
-    func execute(didWin: Bool) {
+    @discardableResult
+    func execute(didWin: Bool) -> GameStats {
         var stats = repository.load()
         stats.gamesPlayed += 1
         if didWin {
@@ -18,5 +19,6 @@ struct RecordGameResultUseCase {
             stats.currentStreak = 0
         }
         repository.save(stats)
+        return stats
     }
 }

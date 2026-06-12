@@ -18,6 +18,14 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Help") {
+                NavigationLink {
+                    HowToPlayView()
+                } label: {
+                    Label("How To Play", systemImage: "questionmark.circle")
+                }
+            }
+
             Section("Statistics") {
                 NavigationLink {
                     StatsView(viewModel: container.makeStatsViewModel())

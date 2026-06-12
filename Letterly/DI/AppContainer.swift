@@ -19,6 +19,7 @@ final class AppContainer {
     let statsRepository: StatsRepository
     let getStatsUseCase: GetStatsUseCase
     let recordGameResultUseCase: RecordGameResultUseCase
+    let resetStatsUseCase: ResetStatsUseCase
 
     let gameStateRepository: GameStateRepository
     let saveGameStateUseCase: SaveGameStateUseCase
@@ -44,6 +45,7 @@ final class AppContainer {
         statsRepository = StatsRepositoryImpl()
         getStatsUseCase = GetStatsUseCase(repository: statsRepository)
         recordGameResultUseCase = RecordGameResultUseCase(repository: statsRepository)
+        resetStatsUseCase = ResetStatsUseCase(repository: statsRepository)
 
         gameStateRepository = GameStateRepositoryImpl()
         saveGameStateUseCase = SaveGameStateUseCase(repository: gameStateRepository)
@@ -72,6 +74,6 @@ final class AppContainer {
     }
 
     func makeStatsViewModel() -> StatsViewModel {
-        StatsViewModel(getStatsUseCase: getStatsUseCase)
+        StatsViewModel(getStatsUseCase: getStatsUseCase, resetStatsUseCase: resetStatsUseCase)
     }
 }

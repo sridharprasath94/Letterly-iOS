@@ -170,13 +170,21 @@ final class GameViewModel: ObservableObject {
 
             if status == .win {
                 await updateWordTimestampUseCase.execute(word: targetWord, mode: mode)
-                recordGameResultUseCase.execute(didWin: true)
+                let stats = recordGameResultUseCase.execute(didWin: true)
                 clearGameStateUseCase.execute(mode: mode)
-                eventPublisher.send(.gameWon)
+                eventPublisher.send(.gameWon(
+                    guessesUsed: guesses.count,
+                    currentStreak: stats.currentStreak,
+                    bestStreak: stats.bestStreak
+                ))
             } else if status == .lose {
-                recordGameResultUseCase.execute(didWin: false)
+                let stats = recordGameResultUseCase.execute(didWin: false)
                 clearGameStateUseCase.execute(mode: mode)
-                eventPublisher.send(.gameLost(target: targetWord))
+                eventPublisher.send(.gameLost(
+                    target: targetWord,
+                    currentStreak: stats.currentStreak,
+                    bestStreak: stats.bestStreak
+                ))
             } else {
                 saveState()
             }
