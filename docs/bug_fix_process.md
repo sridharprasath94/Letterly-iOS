@@ -26,7 +26,7 @@ User action (GameView)
   → GameViewModel method
     → Use case execute()
       → Repository method
-        → WordStore / GroqAPIService
+        → WordStore / HintAPIService
 ```
 
 Read the relevant source files. Use `print` statements or Xcode debugger breakpoints to observe state at runtime if needed. Remove all debug output before committing.
@@ -43,7 +43,7 @@ If the fix is in:
 - A **use case** — verify the fix does not break any sibling use cases
 - **GameViewModel** — verify all `@Published` state and `eventPublisher` sends remain correct
 - **WordStore** — verify actor isolation is maintained (all mutations are actor methods)
-- **GroqAPIService** / **HintRepositoryImpl** — verify error propagation still reaches `eventPublisher.send(.hintFailed)`
+- **HintAPIService** / **HintRepositoryImpl** — verify error propagation still reaches `eventPublisher.send(.hintFailed)`
 
 ---
 

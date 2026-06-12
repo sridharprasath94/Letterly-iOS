@@ -54,16 +54,20 @@ The following describes a GitHub Actions pipeline suited to this project's struc
 
 ### Secret Management
 
-The `GROQ_API_KEY` must be injected before building. Add it as a GitHub Actions secret and write the xcconfig in a pre-build step:
+The iOS build requires `LETTERLY_WORKER_SCHEME` and `LETTERLY_WORKER_HOST` (the deployed Worker endpoint). These are not credentials — store them as GitHub Actions **variables** (not secrets) and write the xcconfig in a pre-build step:
 
 ```yaml
 - name: Create Secrets.xcconfig
   run: |
-    echo "GROQ_API_KEY = ${{ secrets.GROQ_API_KEY }}" \
+    printf 'LETTERLY_WORKER_SCHEME = %s\nLETTERLY_WORKER_HOST = %s\n' \
+      "${{ vars.LETTERLY_WORKER_SCHEME }}" \
+      "${{ vars.LETTERLY_WORKER_HOST }}" \
       > Configuration/Secrets.xcconfig
 ```
 
-Alternatively, override the build setting directly:
+> **Note:** The URL is split into SCHEME + HOST because `//` is the xcconfig line-comment delimiter and would silently truncate a full URL value.
+
+Alternatively, override build settings directly:
 
 ```bash
 xcodebuild build \
@@ -71,8 +75,11 @@ xcodebuild build \
   -scheme Letterly \
   -configuration Debug \
   -destination '...' \
-  GROQ_API_KEY="$GROQ_API_KEY"
+  LETTERLY_WORKER_SCHEME="https" \
+  LETTERLY_WORKER_HOST="$LETTERLY_WORKER_HOST"
 ```
+
+The Groq API key is stored as a Cloudflare Worker secret and is never part of the iOS build pipeline. See `docs/worker.md` for Worker deployment and secrets.
 
 ### Recommended Runner
 

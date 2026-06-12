@@ -27,10 +27,12 @@ final class AppContainer {
     let clearGameStateUseCase: ClearGameStateUseCase
 
     private init() {
-        let groqAPIKey = Bundle.main.object(forInfoDictionaryKey: "GROQ_API_KEY") as? String ?? ""
+        let workerScheme = Bundle.main.object(forInfoDictionaryKey: "LETTERLY_WORKER_SCHEME") as? String ?? "https"
+        let workerHost = Bundle.main.object(forInfoDictionaryKey: "LETTERLY_WORKER_HOST") as? String ?? ""
+        let workerURL = URL(string: "\(workerScheme)://\(workerHost)") ?? URL(string: "https://worker.letterly.invalid")!
 
         wordRepository = WordRepositoryImpl()
-        hintRepository = HintRepositoryImpl(apiService: GroqAPIService(apiKey: groqAPIKey))
+        hintRepository = HintRepositoryImpl(apiService: HintAPIService(workerURL: workerURL))
 
         getRandomWordUseCase = GetRandomWordUseCase(repository: wordRepository)
         checkWordExistsUseCase = CheckWordExistsUseCase(repository: wordRepository)

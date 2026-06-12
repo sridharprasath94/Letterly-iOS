@@ -1,6 +1,6 @@
-struct GroqRequest: Codable {
+struct HintRequest: Codable {
     let model: String
-    let messages: [GroqMessage]
+    let messages: [ChatMessage]
     let maxTokens: Int
 
     enum CodingKeys: String, CodingKey {
@@ -8,22 +8,22 @@ struct GroqRequest: Codable {
         case maxTokens = "max_tokens"
     }
 
-    init(messages: [GroqMessage], maxTokens: Int = 60) {
+    init(messages: [ChatMessage], maxTokens: Int = 60) {
         self.model = "llama-3.1-8b-instant"
         self.messages = messages
         self.maxTokens = maxTokens
     }
 }
 
-struct GroqMessage: Codable {
+struct ChatMessage: Codable {
     let role: String
     let content: String
 }
 
-struct GroqResponse: Codable {
-    let choices: [GroqChoice]
+struct HintResponse: Codable {
+    let choices: [ChatChoice]
 }
 
-struct GroqChoice: Codable {
-    let message: GroqMessage
+struct ChatChoice: Codable {
+    let message: ChatMessage
 }

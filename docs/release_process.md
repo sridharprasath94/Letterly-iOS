@@ -18,7 +18,7 @@ Increment `CURRENT_PROJECT_VERSION` for every App Store submission.
 - [ ] App launches and all three game modes work in Release build on Simulator
 - [ ] App tested on a physical device (at least iPhone)
 - [ ] `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` updated
-- [ ] `Secrets.xcconfig` contains a valid production `GROQ_API_KEY`
+- [ ] `Secrets.xcconfig` contains production values for `LETTERLY_WORKER_SCHEME` (`https`) and `LETTERLY_WORKER_HOST` pointing to the deployed Cloudflare Worker
 - [ ] `Secrets.xcconfig` is **not** committed to git
 - [ ] App icon is present in `Assets.xcassets/AppIcon.appiconset` for all required sizes
 - [ ] Privacy manifest / usage descriptions reviewed if new permissions were added

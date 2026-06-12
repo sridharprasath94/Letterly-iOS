@@ -14,7 +14,7 @@ Letterly is a SwiftUI iOS word-puzzle game (Wordle-style) with three difficulty 
 - **Networking**: `URLSession` + `Codable`
 - **DI**: Manual — `AppContainer` singleton
 - **Persistence**: In-memory `WordStore` actor + `UserDefaults` for word timestamps, game stats, and per-mode in-progress game state (`GameSaveState`)
-- **Secrets**: `Configuration/Secrets.xcconfig` (gitignored) → `Info.plist`
+- **Secrets**: `Configuration/Secrets.xcconfig` (gitignored) → `Info.plist` — holds `LETTERLY_WORKER_SCHEME` + `LETTERLY_WORKER_HOST` (the Cloudflare Worker proxy endpoint, split because `//` is the xcconfig comment delimiter); the Groq API key is never shipped in the app
 - **No external dependencies** (no SPM packages, no CocoaPods)
 - **No test target** (tests do not exist yet)
 
@@ -60,7 +60,7 @@ Domain/
 
 Data/
   Local/       — WordStore (actor; loads words_5/6/7.txt; timestamps in UserDefaults)
-  Remote/      — GroqAPIService, GroqModels
+  Remote/      — HintAPIService, HintModels
   Repository/  — WordRepositoryImpl, HintRepositoryImpl
 
 Presentation/
@@ -84,10 +84,10 @@ Dependency direction: Presentation → Domain ← Data. Domain has zero framewor
 | `Domain/UseCase/EvaluateGuessUseCase.swift` | Core Wordle algorithm (two-pass correct/present) |
 | `Domain/UseCase/GetRandomWordUseCase.swift` | Picks a word not answered in the last 10 days (10 retries) |
 | `Data/Local/WordStore.swift` | `actor`; in-memory word lists; UserDefaults timestamps |
-| `Data/Remote/GroqAPIService.swift` | `URLSession` call to Groq chat-completions endpoint |
+| `Data/Remote/HintAPIService.swift` | Proxies hint requests through the Cloudflare Worker; does not call Groq directly |
 | `Presentation/Game/GameViewModel.swift` | `@MainActor` VM; drives all game state |
 | `Presentation/Game/GameView.swift` | Game screen; listens to `eventPublisher` via `onReceive` |
-| `Configuration/Secrets.xcconfig` | **gitignored** — contains `GROQ_API_KEY` |
+| `Configuration/Secrets.xcconfig` | **gitignored** — contains `LETTERLY_WORKER_SCHEME` + `LETTERLY_WORKER_HOST` (split because `//` is xcconfig's comment delimiter) |
 
 ## Game Modes
 
@@ -242,8 +242,18 @@ Quick summary:
 
 ```bash
 cp Configuration/Secrets.xcconfig.template Configuration/Secrets.xcconfig
-# Edit Secrets.xcconfig and set GROQ_API_KEY = <your key>
+# Edit Secrets.xcconfig and set the Worker scheme and host:
+#   LETTERLY_WORKER_SCHEME = https
+#   LETTERLY_WORKER_HOST = letterly-worker.<your-subdomain>.workers.dev
+#
+# For local development:
+#   LETTERLY_WORKER_SCHEME = http
+#   LETTERLY_WORKER_HOST = localhost:8787
+#
+# Note: the URL is split into two keys because // is the xcconfig comment delimiter.
 ```
+
+The Groq API key is **not** required in the iOS project. It is stored as a Cloudflare Worker secret. See `docs/worker.md` for Worker setup and deployment.
 
 ## Reference Docs
 
@@ -259,6 +269,7 @@ cp Configuration/Secrets.xcconfig.template Configuration/Secrets.xcconfig
 - `docs/release_process.md` — App Store release steps
 - `docs/feature_development_checklist.md` — per-feature checklist
 - `docs/next_steps.md` — technical debt and improvements
+- `docs/worker.md` — Letterly Worker: purpose, API contract, deployment, secret management
 - `~/.claude/skills/senior-ios-engineering-workflow/` — global iOS engineering workflow skill (all phases)
 
 

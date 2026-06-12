@@ -34,7 +34,7 @@ These layers have zero external dependencies and are the most testable:
 
 **WordRepositoryImpl** — delegates correctly to `WordStore`.
 
-**HintRepositoryImpl** — mock `GroqAPIService` to test prompt construction and error propagation.
+**HintRepositoryImpl** — mock `HintAPIService` to test prompt construction and error propagation.
 
 ### UI Tests
 

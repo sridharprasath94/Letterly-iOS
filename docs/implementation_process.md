@@ -52,7 +52,7 @@ Follow the dependency order:
 **4b. Data second**
 - Implement new repository methods in `Data/Repository/`
 - Add new persistence logic to `WordStore` if needed (as actor methods)
-- Add new API models to `Data/Remote/GroqModels.swift` if the Groq prompt shape changes
+- Add new API models to `Data/Remote/HintModels.swift` if the Groq prompt shape changes
 
 **4c. Presentation last**
 - Wire new use cases in `AppContainer.swift` (`makeGameViewModel` factory if needed)

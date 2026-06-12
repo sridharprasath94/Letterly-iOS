@@ -18,7 +18,7 @@ Letterly follows **Clean Architecture + MVVM**. The three primary layers — Dom
              │ implements protocols
 ┌────────────┴─────────────────────┐
 │              Data                │
-│  WordStore  GroqAPIService       │
+│  WordStore  HintAPIService       │
 │  WordRepositoryImpl              │
 │  HintRepositoryImpl              │
 └──────────────────────────────────┘
@@ -84,14 +84,14 @@ AppDelegate.application(_:didFinishLaunchingWithOptions:)
           Stores in [Int: [String]] keyed by length
 ```
 
-### GroqAPIService
+### HintAPIService
 
-Thin `URLSession` wrapper around `https://api.groq.com/openai/v1/chat/completions`. Uses `async throws`, `JSONEncoder`/`JSONDecoder`, and `Codable` models (`GroqRequest`, `GroqMessage`, `GroqResponse`, `GroqChoice`). Model: `llama-3.1-8b-instant`, max tokens: 60.
+Thin `URLSession` wrapper that proxies hint requests through the Letterly Worker. The Worker URL is read from `Info.plist` (injected via `Secrets.xcconfig` at build time). The Worker forwards requests to Groq on the server side, injecting the API key from its Cloudflare secret store. Request/response models: `HintRequest`, `ChatMessage`, `HintResponse`, `ChatChoice`. Max tokens: 60.
 
 ### Repository Implementations
 
 `WordRepositoryImpl` bridges `WordStore` (actor) to the `WordRepository` protocol.
-`HintRepositoryImpl` builds the hint prompt (avoiding repeated hints) and calls `GroqAPIService`.
+`HintRepositoryImpl` builds the hint prompt (avoiding repeated hints) and calls `HintAPIService`.
 
 ## Presentation Layer
 
@@ -149,8 +149,24 @@ resetGame()
 
 - All ViewModel state mutations are on `MainActor` (class is annotated `@MainActor`).
 - `WordStore` is an `actor`; all calls to it are `await`ed.
-- `GroqAPIService.getChatCompletion` is `async throws`.
+- `HintAPIService.requestHint` is `async throws`.
 - `Task {}` blocks are launched inside `GameViewModel` methods; they inherit `MainActor` context from the surrounding class.
+
+## Network Architecture
+
+AI hint requests follow a three-hop path to keep the Groq API key off the device:
+
+```
+Letterly (iOS)
+  └─ HintAPIService (URLSession POST /hint)
+       └─ letterly-worker (Cloudflare)
+            (GROQ_API_KEY read from Cloudflare secret store)
+                 └─ Groq API (llama-3.1-8b-instant)
+```
+
+**Security rationale:** Embedding API keys in an iOS binary is insecure — the key is extractable from any IPA. The Worker acts as a trusted proxy: the iOS app holds only the Worker's public scheme and host (`LETTERLY_WORKER_SCHEME` + `LETTERLY_WORKER_HOST`), never the Groq key itself.
+
+See `docs/worker.md` for the Worker's API contract and deployment instructions.
 
 ## Unused Artefacts
 

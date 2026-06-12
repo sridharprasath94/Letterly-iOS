@@ -130,6 +130,6 @@ xcrun simctl erase "iPhone 17 Pro"
 
 | Error | Cause | Fix |
 |---|---|---|
-| `GROQ_API_KEY` missing | `Secrets.xcconfig` not created | Run `cp Configuration/Secrets.xcconfig.template Configuration/Secrets.xcconfig` and fill in the key |
+| `LETTERLY_WORKER_HOST` missing | `Secrets.xcconfig` not created | Run `cp Configuration/Secrets.xcconfig.template Configuration/Secrets.xcconfig` and set `LETTERLY_WORKER_SCHEME` + `LETTERLY_WORKER_HOST` |
 | `Module 'Letterly' not found` | Wrong scheme or configuration selected | Verify `-scheme Letterly` is passed |
 | Swift concurrency warnings treated as errors | Strict concurrency mode | Ensure all new async code uses `await` and respects actor isolation |
